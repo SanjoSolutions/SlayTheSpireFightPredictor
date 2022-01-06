@@ -334,6 +334,7 @@ def obtain_relic(relic_to_obtain, current_deck, master_deck, current_relics, mas
         return
     if relic_to_obtain == 'Calling Bell':
         current_relics.extend(master_relics[len(current_relics) + 1:len(current_relics) + 4])
+        current_deck.append('CurseOfTheBell')
     if relic_to_obtain == 'Empty Cage':
         unknown_removes_by_floor[floor] = 2
     if relic_to_obtain == 'Whetstone':
