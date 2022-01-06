@@ -6,6 +6,7 @@ import time
 import gc
 import re
 import datetime
+from itertools import groupby
 
 import pprint
 
@@ -111,7 +112,7 @@ def process_runs(data_dir):
 def process_run(data):
     battle_stats_by_floor = {battle_stat['floor']: battle_stat for battle_stat in data['damage_taken']}
     events_by_floor = {event_stat['floor']: event_stat for event_stat in data['event_choices']}
-    card_choices_by_floor = {card_choice['floor']: card_choice for card_choice in data['card_choices']}
+    card_choices_by_floor = {key: list(group) for key, group in groupby(data['card_choices'], key=lambda card_choice: card_choice['floor'])}
     relics_by_floor = get_relics_by_floor(data)
     campfire_choices_by_floor = {campfire_choice['floor']: campfire_choice for campfire_choice in
                                  data['campfire_choices']}
@@ -224,15 +225,16 @@ def process_battle(master_data, battle_stat, potion_use_by_floor, current_deck, 
 
 
 def process_card_choice(card_choice_data, current_deck, current_relics):
-    picked_card = card_choice_data['picked']
-    if picked_card != 'SKIP' and picked_card != 'Singing Bowl':
-        if 'Molten Egg 2' in current_relics and picked_card in BASE_GAME_ATTACKS and picked_card[-2] != '+1':
-            picked_card += '+1'
-        if 'Toxic Egg 2' in current_relics and picked_card in BASE_GAME_SKILLS and picked_card[-2] != '+1':
-            picked_card += '+1'
-        if 'Frozen Egg 2' in current_relics and picked_card in BASE_GAME_POWERS and picked_card[-2] != '+1':
-            picked_card += '+1'
-        current_deck.append(picked_card)
+    for card_choice in card_choice_data:
+        picked_card = card_choice['picked']
+        if picked_card != 'SKIP' and picked_card != 'Singing Bowl':
+            if 'Molten Egg 2' in current_relics and picked_card in BASE_GAME_ATTACKS and picked_card[-2] != '+1':
+                picked_card += '+1'
+            if 'Toxic Egg 2' in current_relics and picked_card in BASE_GAME_SKILLS and picked_card[-2] != '+1':
+                picked_card += '+1'
+            if 'Frozen Egg 2' in current_relics and picked_card in BASE_GAME_POWERS and picked_card[-2] != '+1':
+                picked_card += '+1'
+            current_deck.append(picked_card)
 
 
 def process_relics(relics, current_relics, master_relics, floor, unknowns):
