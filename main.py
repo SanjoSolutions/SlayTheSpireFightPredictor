@@ -129,6 +129,8 @@ def process_run(data):
     unknown_cards_by_floor = dict()
     unknowns = (unknown_removes_by_floor, unknown_upgrades_by_floor, unknown_transforms_by_floor, unknown_cards_by_floor)
 
+    master_deck = sorted(data['master_deck'])
+
     processed_fights = list()
     for floor in range(0, data['floor_reached'] + 1):
         if floor in battle_stats_by_floor and floor != 1:
@@ -136,7 +138,7 @@ def process_run(data):
             processed_fights.append(fight_data)
 
         if floor in relics_by_floor:
-            process_relics(relics_by_floor[floor], current_relics, data['relics'], floor, unknowns)
+            process_relics(relics_by_floor[floor], current_relics, data['relics'], current_deck, master_deck, floor, unknowns)
 
         if floor in card_choices_by_floor:
             process_card_choice(card_choices_by_floor[floor], current_deck, current_relics)
@@ -147,19 +149,18 @@ def process_run(data):
                 return process_run(new_data)
 
         if floor in purchases_by_floor:
-            try_process_data(partial(process_purchases, purchases_by_floor[floor], current_deck, current_relics, data['relics'], floor, unknowns), floor, current_deck, current_relics, data, unknowns)
+            try_process_data(partial(process_purchases, purchases_by_floor[floor], current_deck, master_deck, current_relics, data['relics'], floor, unknowns), floor, current_deck, current_relics, data, unknowns)
 
         if floor in purges_by_floor:
             try_process_data(partial(process_purges, purges_by_floor[floor], current_deck), floor, current_deck, current_relics, data, unknowns)
 
         if floor in events_by_floor:
-            try_process_data(partial(process_events, events_by_floor[floor], current_deck, current_relics, data['relics'], floor, unknowns), floor, current_deck, current_relics, data, unknowns)
+            try_process_data(partial(process_events, events_by_floor[floor], current_deck, master_deck, current_relics, data['relics'], floor, unknowns), floor, current_deck, current_relics, data, unknowns)
 
         if floor == 0:
             process_neow(data['neow_bonus'], current_deck, current_relics, data['relics'], unknowns)
 
     current_deck.sort()
-    master_deck = sorted(data['master_deck'])
     current_relics.sort()
     master_relics = sorted(data['relics'])
     if current_deck != master_deck or current_relics != master_relics:
@@ -237,9 +238,9 @@ def process_card_choice(card_choice_data, current_deck, current_relics):
             current_deck.append(picked_card)
 
 
-def process_relics(relics, current_relics, master_relics, floor, unknowns):
+def process_relics(relics, current_relics, master_relics, current_deck, master_deck, floor, unknowns):
     for r in relics:
-        obtain_relic(r, current_relics, master_relics, floor, unknowns)
+        obtain_relic(r, current_deck, master_deck, current_relics, master_relics, floor, unknowns)
 
 
 def process_campfire_choice(campfire_data, current_deck):
@@ -250,12 +251,12 @@ def process_campfire_choice(campfire_data, current_deck):
         current_deck.remove(campfire_data['data'])
 
 
-def process_purchases(purchase_data, current_deck, current_relics, master_relics, floor, unknowns):
+def process_purchases(purchase_data, current_deck, master_deck, current_relics, master_relics, floor, unknowns):
     purchased_cards = [x for x in purchase_data if x not in BASE_GAME_RELICS and x not in BASE_GAME_POTIONS]
     purchased_relics = [x for x in purchase_data if x not in purchased_cards and x not in BASE_GAME_POTIONS]
     current_deck.extend(purchased_cards)
     for r in purchased_relics:
-        obtain_relic(r, current_relics, master_relics, floor, unknowns)
+        obtain_relic(r, current_deck, master_deck, current_relics, master_relics, floor, unknowns)
 
 
 def process_purges(purge_data, current_deck):
@@ -263,10 +264,10 @@ def process_purges(purge_data, current_deck):
         current_deck.remove(card)
 
 
-def process_events(event_data, current_deck, current_relics, master_relics, floor, unknowns):
+def process_events(event_data, current_deck, master_deck, current_relics, master_relics, floor, unknowns):
     if 'relics_obtained' in event_data:
         for r in event_data['relics_obtained']:
-            obtain_relic(r, current_relics, master_relics, floor, unknowns)
+            obtain_relic(r, current_deck, master_deck, current_relics, master_relics, floor, unknowns)
     if 'relics_lost' in event_data:
         for relic in event_data['relics_lost']:
             current_relics.remove(relic)
@@ -314,7 +315,7 @@ def upgrade_card(current_deck, card_to_upgrade):
     current_deck[card_to_upgrade_index] += '+1'
 
 
-def obtain_relic(relic_to_obtain, current_relics, master_relics, floor, unknowns):
+def obtain_relic(relic_to_obtain, current_deck, master_deck, current_relics, master_relics, floor, unknowns):
     unknown_removes_by_floor, unknown_upgrades_by_floor, unknown_transforms_by_floor, unknown_cards_by_floor = unknowns
     if relic_to_obtain == 'Black Blood':
         current_relics[0] = 'Black Blood'
@@ -335,6 +336,8 @@ def obtain_relic(relic_to_obtain, current_relics, master_relics, floor, unknowns
         unknown_upgrades_by_floor[floor] = [{'type': 'skill'}, {'type': 'skill'}]
     if relic_to_obtain == 'HolyWater':
         current_relics.remove('PureWater')
+    elif relic_to_obtain == 'Necronomicon' and 'Necronomicurse' in master_deck:
+        current_deck.append('Necronomicurse')
     current_relics.append(relic_to_obtain)
 
 
