@@ -229,13 +229,18 @@ def process_card_choice(card_choice_data, current_deck, current_relics):
     for card_choice in card_choice_data:
         picked_card = card_choice['picked']
         if picked_card != 'SKIP' and picked_card != 'Singing Bowl':
-            if 'Molten Egg 2' in current_relics and picked_card in BASE_GAME_ATTACKS and picked_card[-2] != '+1':
-                picked_card += '+1'
-            if 'Toxic Egg 2' in current_relics and picked_card in BASE_GAME_SKILLS and picked_card[-2] != '+1':
-                picked_card += '+1'
-            if 'Frozen Egg 2' in current_relics and picked_card in BASE_GAME_POWERS and picked_card[-2] != '+1':
-                picked_card += '+1'
-            current_deck.append(picked_card)
+            add_card_to_deck(current_deck, current_relics, picked_card)
+
+
+def add_card_to_deck(current_deck, current_relics, card):
+    if 'Molten Egg 2' in current_relics and card in BASE_GAME_ATTACKS and card[-2] != '+1':
+        card += '+1'
+    if 'Toxic Egg 2' in current_relics and card in BASE_GAME_SKILLS and card[-2] != '+1':
+        card += '+1'
+    if 'card Egg 2' in current_relics and card in BASE_GAME_POWERS and card[-2] != '+1':
+        picked_card += '+1'
+    current_deck.append(card)
+
 
 
 def process_relics(relics, current_relics, master_relics, current_deck, master_deck, floor, unknowns):
@@ -272,7 +277,8 @@ def process_events(event_data, current_deck, master_deck, current_relics, master
         for relic in event_data['relics_lost']:
             current_relics.remove(relic)
     if 'cards_obtained' in event_data:
-        current_deck.extend(event_data['cards_obtained'])
+        for card in event_data['cards_obtained']:
+            add_card_to_deck(current_deck, current_relics, card)
     if 'cards_removed' in event_data:
         for card in event_data['cards_removed']:
             current_deck.remove(card)
