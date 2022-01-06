@@ -328,6 +328,8 @@ def obtain_relic(relic_to_obtain, current_relics, master_relics, floor, unknowns
         unknown_upgrades_by_floor[floor] = [{'type': 'attack'}, {'type': 'attack'}]
     if relic_to_obtain == 'War Paint':
         unknown_upgrades_by_floor[floor] = [{'type': 'skill'}, {'type': 'skill'}]
+    if relic_to_obtain == 'HolyWater':
+        current_relics.remove('PureWater')
     current_relics.append(relic_to_obtain)
 
 
