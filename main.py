@@ -37,7 +37,7 @@ def process_runs(data_dir):
     for root, dirs, files in os.walk(data_dir):
         for fname in files:
             path = os.path.join(root, fname)
-            if path.endswith(".run.json"):
+            if path.endswith(".run"):
                 total_file_count += 1
 
                 # Save batch to file
