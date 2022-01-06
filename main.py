@@ -276,6 +276,9 @@ def process_events(event_data, current_deck, current_relics, master_relics, floo
     if 'cards_upgraded' in event_data:
         for card in event_data['cards_upgraded']:
             upgrade_card(current_deck, card)
+    if 'cards_transformed' in event_data:
+        for card in event_data['cards_transformed']:
+            current_deck.remove(card)
     if 'event_name' in event_data and event_data['event_name'] == 'Vampires':
         current_deck[:] = [x for x in current_deck if not x.startswith('Strike')]
 
