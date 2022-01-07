@@ -30,7 +30,6 @@ def process_runs(data_dir):
     total_file_count = 0
     file_not_processed_count = 0
     file_processed_count = 0
-    file_master_not_match_count = 0
     fight_training_examples = list()
 
     tmp_dir = os.path.join('out', str(round(time.time())))
@@ -65,8 +64,6 @@ def process_runs(data_dir):
                     print(
                         f'Files SUCCESSFULLY processed: {file_processed_count} => {((file_processed_count / total_file_count) * 100):.1f} %')
                     print(
-                        f'Files with master deck not matching created deck: {file_master_not_match_count} => {((file_master_not_match_count / total_file_count) * 100):.1f} %')
-                    print(
                         f'Files not processed: {file_not_processed_count} => {((file_not_processed_count / total_file_count) * 100):.1f} %')
                     print(f'Total files: {total_file_count}')
                     print(f'Number of Training Examples in batch: {len(fight_training_examples)}')
@@ -88,10 +85,6 @@ def process_runs(data_dir):
                                 processed_run.extend(process_run(data))
                                 file_processed_count += 1
                                 fight_training_examples.extend(processed_run)
-                            except RuntimeError as e:
-                                file_master_not_match_count += 1
-                                # print(f'{path}\n')
-                                pass
                             except Exception as e:
                                 file_not_processed_count += 1
                                 # print(path)
@@ -101,7 +94,6 @@ def process_runs(data_dir):
     print(f'\n\n\nFiles not able to open: {file_not_opened} => {((file_not_opened / total_file_count) * 100):.1f} %')
     print(f'Files filtered with pre-filter: {bad_file_count} => {((bad_file_count / total_file_count) * 100):.1f} %')
     print(f'Files SUCCESSFULLY processed: {file_processed_count} => {((file_processed_count / total_file_count) * 100):.1f} %')
-    print(f'Files with master deck not matching created deck: {file_master_not_match_count} => {((file_master_not_match_count / total_file_count) * 100):.1f} %')
     print(f'Files not processed: {file_not_processed_count} => {((file_not_processed_count / total_file_count) * 100):.1f} %')
     print(f'Total files: {total_file_count}')
     print(f'Number of Training Examples: {len(fight_training_examples)}')
@@ -168,19 +160,13 @@ def process_run(data):
                                                  master_relics=data['relics'], unknowns=unknowns, master_data=data)
         if success:
             return process_run(new_data)
-        # if current_deck == master_deck:
-        #     print(f'\nSo close!!!!!   XX Relics XX')
-        # elif current_relics == master_relics:
-        #     print(f'\nSo close!!!!!   XX Deck XX')
-        # else:
-        #     print(f'\nLess close!!!!!   XX Deck and Relics XX')
-        #
-        #
-        # print(f'Current Deck\t: {sorted(current_deck)}')
-        # print(f'Master Deck\t\t: {sorted(master_deck)}')
-        # print(f'Current Relics\t: {sorted(current_relics)}')
-        # print(f'Master Relics\t: {sorted(master_relics)}\n')
-        raise RuntimeError('Final decks or relics did not match')
+        else:
+            last_fight = processed_fights[-1]
+            last_fight['cards'] = list(data['master_deck'])
+            last_fight['relics'] = list(data['relics'])
+            processed_fights = [last_fight]
+            print('')
+            return processed_fights
     else:
         return processed_fights
 
