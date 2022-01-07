@@ -363,14 +363,24 @@ def get_relics_by_floor(data):
     relics_by_floor = get_stats_by_floor_with_list(data, 'relics_obtained')
     boss_relics = data['boss_relics']
     if len(boss_relics) >= 1:
-        picked_relic = boss_relics[0]['picked']
-        if picked_relic != 'SKIP':
-            relics_by_floor[17] = [picked_relic]
-    if len(boss_relics) == 2:
-        picked_relic = boss_relics[1]['picked']
-        if picked_relic != 'SKIP':
-            relics_by_floor[34] = [picked_relic]
+        first_boss_relic = get_picked_boss_relic(boss_relics, 0)
+        if first_boss_relic is not None:
+            relics_by_floor[17] = [first_boss_relic]
+    if len(boss_relics) >= 2:
+        second_boss_relic = get_picked_boss_relic(boss_relics, 1)
+        if second_boss_relic is not None:
+            relics_by_floor[34] = [second_boss_relic]
     return relics_by_floor
+
+
+def get_picked_boss_relic(boss_relics, index):
+    if len(boss_relics) > index:
+        boss_relic = boss_relics[index]
+        if 'picked' in boss_relic:
+            picked_relic = boss_relic['picked']
+            if picked_relic != 'SKIP':
+                return picked_relic
+    return None
 
 
 def get_starting_relics(character):
