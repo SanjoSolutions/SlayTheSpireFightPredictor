@@ -462,9 +462,7 @@ def valid_build_number(string, character):
         day = int(m.group(3))
 
         date = datetime.date(year, month, day)
-        if date >= datetime.date(2020, 1, 16):
-            return True
-        elif character in ['IRONCLAD', 'THE_SILENT', 'DEFECT'] and date >= datetime.date(2019, 1, 23):
+        if date >= datetime.date(2020, 11, 29):
             return True
 
     return False
