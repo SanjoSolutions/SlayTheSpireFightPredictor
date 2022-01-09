@@ -7,6 +7,7 @@ import gc
 import re
 import datetime
 from itertools import groupby
+import gzip
 
 import pprint
 
@@ -26,18 +27,34 @@ BASE_GAME_ENEMIES = {'Blue Slaver', 'Cultist', 'Jaw Worm', 'Looter', '2 Louse', 
 
 def process_runs(data_dir):
     file_not_opened = 0
-    bad_file_count = 0
+    bad_entry_count = 0
     total_file_count = 0
-    file_not_processed_count = 0
-    file_processed_count = 0
+    entry_not_processed_count = 0
+    entry_processed_count = 0
+    entry_master_not_match_count = 0
+    total_entry_count = 0
     fight_training_examples = list()
+
+    def log():
+        print(
+            f'\n\n\nFiles not able to open: {file_not_opened} => {((file_not_opened / total_file_count) * 100):.1f} %')
+        print(
+            f'Entries filtered with pre-filter: {bad_entry_count} => {((bad_entry_count / total_entry_count) * 100):.1f} %')
+        print(
+            f'Entries SUCCESSFULLY processed: {entry_processed_count} => {((entry_processed_count / total_entry_count) * 100):.1f} %')
+        print(
+            f'Entries with master deck not matching created deck: {entry_master_not_match_count} => {((entry_master_not_match_count / total_entry_count) * 100):.1f} %')
+        print(
+            f'Entries not processed: {entry_not_processed_count} => {((entry_not_processed_count / total_entry_count) * 100):.1f} %')
+        print(f'Total files: {total_file_count}')
+        print(f'Number of Training Examples in batch: {len(fight_training_examples)}')
 
     tmp_dir = os.path.join('out', str(round(time.time())))
     os.mkdir(tmp_dir)
     for root, dirs, files in os.walk(data_dir):
         for fname in files:
             path = os.path.join(root, fname)
-            if path.endswith(".run"):
+            if path.endswith(".run.json") or path.endswith(".run") or path.endswith(".json.gz"):
                 total_file_count += 1
 
                 # Save batch to file
@@ -57,48 +74,53 @@ def process_runs(data_dir):
 
                 # Print update
                 if total_file_count % 200 == 0:
-                    print(
-                        f'\n\n\nFiles not able to open: {file_not_opened} => {((file_not_opened / total_file_count) * 100):.1f} %')
-                    print(
-                        f'Files filtered with pre-filter: {bad_file_count} => {((bad_file_count / total_file_count) * 100):.1f} %')
-                    print(
-                        f'Files SUCCESSFULLY processed: {file_processed_count} => {((file_processed_count / total_file_count) * 100):.1f} %')
-                    print(
-                        f'Files not processed: {file_not_processed_count} => {((file_not_processed_count / total_file_count) * 100):.1f} %')
-                    print(f'Total files: {total_file_count}')
-                    print(f'Number of Training Examples in batch: {len(fight_training_examples)}')
+                    log()
 
                 # Process file
                 try:
-                    with open(path, 'r', encoding='utf8') as file:
-                        data = json.load(file)
-                        if is_bad_file(data):
-                            bad_file_count += 1
+                    entries = read_file(path)
+                    for entry in entries:
+                        total_entry_count += 1
+                        if is_bad_file(entry):
+                            bad_entry_count += 1
                         else:
-                            if 'ReplayTheSpireMod:Calculation Training+1' in data['master_deck']:
+                            if 'ReplayTheSpireMod:Calculation Training+1' in entry['master_deck']:
                                 print('Modded file found')
-                                print(data)
+                                print(entry)
                                 print(path)
                             processed_run = list()
                             try:
                                 processed_run.clear()
-                                processed_run.extend(process_run(data))
-                                file_processed_count += 1
+                                processed_run.extend(process_run(entry))
+                                entry_processed_count += 1
                                 fight_training_examples.extend(processed_run)
                             except Exception as e:
-                                file_not_processed_count += 1
+                                entry_not_processed_count += 1
                                 # print(path)
+
                 except Exception as e:
                     file_not_opened += 1
 
-    print(f'\n\n\nFiles not able to open: {file_not_opened} => {((file_not_opened / total_file_count) * 100):.1f} %')
-    print(f'Files filtered with pre-filter: {bad_file_count} => {((bad_file_count / total_file_count) * 100):.1f} %')
-    print(f'Files SUCCESSFULLY processed: {file_processed_count} => {((file_processed_count / total_file_count) * 100):.1f} %')
-    print(f'Files not processed: {file_not_processed_count} => {((file_not_processed_count / total_file_count) * 100):.1f} %')
-    print(f'Total files: {total_file_count}')
-    print(f'Number of Training Examples: {len(fight_training_examples)}')
+    log()
     write_file_name = f'data_{round(time.time())}.json'
     write_file(fight_training_examples, os.path.join(tmp_dir, write_file_name))
+
+
+def read_file(file_path):
+    with open_file(file_path) as file:
+        data = json.load(file)
+        if not isinstance(data, list):
+            data = [data]
+        data = list(map(lambda entry: entry['event'] if 'event' in entry else entry, data))
+        return data
+
+
+def open_file(file_path):
+    filename, file_extension = os.path.splitext(file_path)
+    if file_extension == '.gz':
+        return gzip.open(file_path, 'r')
+    else:
+        return open(file_path, 'r', encoding='utf8')
 
 
 def process_run(data):
@@ -462,13 +484,25 @@ def valid_build_number(string, character):
         day = int(m.group(3))
 
         date = datetime.date(year, month, day)
-        if date >= datetime.date(2020, 11, 29):
+        if date >= datetime.date(2020, 1, 14):
             return True
 
     return False
 
 
 def is_bad_file(data):
+    # key = 'ascension_level'
+    # if key not in data or data[key] < 20:
+    #     return True
+
+    key = 'floor_reached'
+    if key not in data or data[key] < 51:
+        return True
+
+    key = 'build_version'
+    if key not in data or valid_build_number(data[key], data['character_chosen']) is False:
+        return True
+
     # Corrupted files
     necessary_fields = ['damage_taken', 'event_choices', 'card_choices', 'relics_obtained', 'campfire_choices',
                         'items_purchased', 'item_purchase_floors', 'items_purged', 'items_purged_floors',
@@ -492,11 +526,6 @@ def is_bad_file(data):
 
     key = 'relics'
     if key not in data or set(data[key]).issubset(BASE_GAME_RELICS) is False:
-        return True
-
-    # Watcher files since full release of watcher (v2.0) and ironclad, silent, defect since v1.0
-    key = 'build_version'
-    if key not in data or valid_build_number(data[key], data['character_chosen']) is False:
         return True
 
     # Non standard runs
@@ -529,11 +558,6 @@ def is_bad_file(data):
     if key not in data or data[key] > 60:
         return True
 
-    # Really bad players or give ups
-    key = 'floor_reached'
-    if key not in data or data[key] < 4:
-        return True
-
     key = 'score'
     if key not in data or data[key] < 10:
         return True
@@ -555,7 +579,7 @@ def process_single_file(data_dir, filename):
         print(f'Result: {result}')
 
 
-directory = 'SpireLogs Data'
+directory = r'E:\google_drive'
 process_runs(directory)
 # process_single_file(directory, '1556873247.run')
 
