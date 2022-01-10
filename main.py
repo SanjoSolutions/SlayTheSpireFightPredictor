@@ -1500,7 +1500,7 @@ BASE_GAME_ENEMIES = {
 
 
 input_path = r'E:\google_drive\2_0'
-output_path = os.path.abspath(r'out\c.tfrecord')
+output_path = os.path.abspath(r'out\d.tfrecord')
 
 
 def process_runs():
@@ -1535,6 +1535,13 @@ def gather_file_paths(folder_path):
     return file_paths
 
 
+act_3_bosses = {
+    'Awakened One',
+    'Donu and Deca',
+    'Time Eater',
+}
+
+
 def process(file_path):
     examples = []
     if file_path.endswith(".run.json") or file_path.endswith(".run") or file_path.endswith(".json.gz"):
@@ -1544,6 +1551,7 @@ def process(file_path):
                 if not is_bad_entry(entry):
                     try:
                         run_examples = process_run(entry)
+                        run_examples = filter(lambda example: example['enemies'] in act_3_bosses, run_examples)
                         examples.extend(run_examples)
                     except Exception as e:
                         pass
@@ -1948,7 +1956,7 @@ def resolve_missing_data(current_deck, current_relics, master_deck, master_relic
 BUILD_VERSION_REGEX = re.compile('[0-9]{4}-[0-9]{2}-[0-9]{2}$')
 
 
-def valid_build_number(string, character):
+def valid_build_number(string):
     pattern = re.compile('[0-9]{4}-[0-9]{2}-[0-9]{2}$')
     if pattern.match(string):
         m = re.search('(.+)-(.+)-(.+)', string)
@@ -1964,16 +1972,22 @@ def valid_build_number(string, character):
 
 
 def is_bad_entry(data):
-    key = 'ascension_level'
-    if key not in data or data[key] < 20:
-        return True
+    # key = 'ascension_level'
+    # if key not in data or data[key] < 20:
+    #     return True
 
     key = 'floor_reached'
     if key not in data or data[key] < 51 or data[key] > 56:
         return True
 
+    key = 'character_chosen'
+    # if data[key] not in ['IRONCLAD', 'THE_SILENT', 'DEFECT', 'WATCHER']:
+    if data[key] != 'WATCHER':
+        # print(f'Modded character: {data[key]}')
+        return True
+
     key = 'build_version'
-    if key not in data or valid_build_number(data[key], data['character_chosen']) is False:
+    if key not in data or valid_build_number(data[key]) is False:
         return True
 
     # Non standard runs
@@ -2006,12 +2020,6 @@ def is_bad_entry(data):
         if field not in data:
             # print(f'File missing field: {field}')
             return True
-
-    # Modded games
-    key = 'character_chosen'
-    if data[key] not in ['IRONCLAD', 'THE_SILENT', 'DEFECT', 'WATCHER']:
-        # print(f'Modded character: {data[key]}')
-        return True
 
     key = 'master_deck'
     if key not in data or set(data[key]).issubset(BASE_GAME_CARDS_AND_UPGRADES) is False:

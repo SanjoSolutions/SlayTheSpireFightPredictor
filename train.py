@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 import pdb
 
-input_path = r'C:\slay_the_spire\SlayTheSpireFightPredictor\out\c.tfrecord'
+input_path = r'C:\slay_the_spire\SlayTheSpireFightPredictor\out\d.tfrecord'
 
 dataset = tf.data.TFRecordDataset(filenames=[input_path])
 
@@ -1007,92 +1007,11 @@ ALL_RELICS = [
     "Yang"
 ]
 ALL_ENCOUNTERS = [
-    'Blue Slaver',
-    'Cultist',
-    'Jaw Worm',
-    '2 Louse',
-    'Small Slimes',
-
-    'Gremlin Gang',
-    'Large Slime',
-    'Looter',
-    'Lots of Slimes',
-    'Exordium Thugs',
-    'Exordium Wildlife',
-    'Red Slaver',
-    '3 Louse',
-    '2 Fungi Beasts',
-
-    'Gremlin Nob',
-    'Lagavulin',
-    '3 Sentries',
-
-    'Lagavulin Event',
-    'The Mushroom Lair',
-
-    'The Guardian',
-    'Hexaghost',
-    'Slime Boss',
-
-    'Chosen',
-    'Shell Parasite',
-    'Spheric Guardian',
-    '3 Byrds',
-    '2 Thieves',
-
-    'Chosen and Byrds',
-    'Sentry and Sphere',
-    'Snake Plant',
-    'Snecko',
-    'Centurion and Healer',
-    'Cultist and Chosen',
-    '3 Cultists',
-    'Shelled Parasite and Fungi',
-
-    'Gremlin Leader',
-    'Slavers',
-    'Book of Stabbing',
-
-    'Masked Bandits',
-    'Colosseum Nobs',
-    'Colosseum Slavers',
-
-    'Automaton',
-    'Champ',
-    'Collector',
-
-    'Orb Walker',
-    '3 Darklings',
-    '3 Shapes',
-
-    'Transient',
-    '4 Shapes',
-    'Maw',
-    'Jaw Worm Horde',
-    'Sphere and 2 Shapes',
-    'Spire Growth',
-    'Writhing Mass',
-
-    'Giant Head',
-    'Nemesis',
-    'Reptomancer',
-
-    'Mysterious Sphere',
-    'Mind Bloom Boss Battle',
-    '2 Orb Walkers',
-
     'Awakened One',
     'Donu and Deca',
-    'Time Eater',
-
-    'Shield and Spear',
-
-    'The Heart'
+    'Time Eater'
 ]
 ALL_CHARACTERS = [
-    'DEFECT',
-    'IRONCLAD',
-    'THE_SILENT',
     'WATCHER'
 ]
 
@@ -1281,7 +1200,7 @@ batch_size = 32
 
 dataset = dataset.prefetch(tf.data.AUTOTUNE)
 dataset = dataset.map(preprocess, num_parallel_calls=tf.data.AUTOTUNE)
-dataset = dataset.repeat()
+dataset = dataset.repeat(epochs)
 dataset = dataset.shuffle(5000)
 dataset = dataset.batch(batch_size)
 
@@ -1306,15 +1225,17 @@ model.compile(
 early_stopping_callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
 
 # Tensorboard
-logdir = os.path.join("logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
-tensorboard_callback = tf.keras.callbacks.TensorBoard(logdir, histogram_freq=1)
+# logdir = os.path.join("logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+# tensorboard_callback = tf.keras.callbacks.TensorBoard(logdir, histogram_freq=1)
 
 history = model.fit(
     dataset,
     batch_size=batch_size,
-    epochs=epochs,
-    steps_per_epoch=5000,
-    callbacks=[early_stopping_callback, tensorboard_callback]
+    epochs=1,
+    callbacks=[
+        early_stopping_callback,
+        # tensorboard_callback
+    ]
 )
 
 test_scores = model.evaluate(dataset, verbose=2)
