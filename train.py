@@ -1015,6 +1015,10 @@ ALL_CHARACTERS = [
     'WATCHER'
 ]
 
+card_to_index = dict()
+for index, card in enumerate(ALL_CARDS):
+    card_to_index[card] = index
+
 
 def encode_list(list_to_encode, category):
     np_array = np.array(list_to_encode)
@@ -1045,15 +1049,19 @@ def generalize_strikes_and_defends(cards):
             cards[i] = re.sub('_.', '', s)
 
 
+MAX_AMOUNT_PER_CARD_TYPE = 10
+
+
 def encode_cards(cards):
-    """
-    Encodes a list of cards into a modified one-hot vector where each index
-    represents how many of that card are in the deck. The vector has length of
-    ALL_CARDS.
-    """
     cards = np.array(cards)
     generalize_strikes_and_defends(cards)
-    return encode_list(cards, ALL_CARDS)
+    encoding = np.zeros((len(ALL_CARDS) * MAX_AMOUNT_PER_CARD_TYPE,))
+    for card in cards:
+        index = card_to_index[card]
+        for offset in range(MAX_AMOUNT_PER_CARD_TYPE):
+            if encoding[index + offset] == 0:
+                encoding[index + offset] = 1
+    return encoding
 
 
 def encode_relics(relics):
@@ -1207,7 +1215,7 @@ dataset = dataset.batch(batch_size)
 model = tf.keras.models.Sequential([
     tf.keras.layers.Dense(
         400,
-        input_shape=(len(ALL_CARDS) + len(ALL_RELICS) + len(ALL_ENCOUNTERS) + 4,),
+        input_shape=(len(ALL_CARDS) * MAX_AMOUNT_PER_CARD_TYPE + len(ALL_RELICS) + len(ALL_ENCOUNTERS) + 4,),
         activation='relu'
     ),
     tf.keras.layers.Dropout(.2),
