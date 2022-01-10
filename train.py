@@ -2,9 +2,7 @@ import numpy as np
 import tensorflow as tf
 import pdb
 
-tf.data.experimental.enable_debug_mode()
-
-input_path = r'C:\slay_the_spire\SlayTheSpireFightPredictor\out\b.tfrecord'
+input_path = r'C:\slay_the_spire\SlayTheSpireFightPredictor\out\c.tfrecord'
 
 dataset = tf.data.TFRecordDataset(filenames=[input_path])
 
@@ -1281,7 +1279,9 @@ import datetime, os
 epochs = 5
 batch_size = 32
 
-dataset = dataset.map(preprocess)
+dataset = dataset.prefetch(tf.data.AUTOTUNE)
+dataset = dataset.map(preprocess, num_parallel_calls=tf.data.AUTOTUNE)
+dataset = dataset.repeat()
 dataset = dataset.shuffle(5000)
 dataset = dataset.batch(batch_size)
 
@@ -1300,15 +1300,22 @@ model = tf.keras.models.Sequential([
 model.summary()
 model.compile(
     optimizer=keras.optimizers.RMSprop(learning_rate=.001),
-    loss='mean_absolute_error',
-    metrics=['mean_absolute_error', 'mean_squared_error'])
+    loss='mean_absolute_error'
+)
+
+early_stopping_callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
 
 # Tensorboard
 logdir = os.path.join("logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 tensorboard_callback = tf.keras.callbacks.TensorBoard(logdir, histogram_freq=1)
 
-history = model.fit(dataset, batch_size=batch_size, epochs=epochs,
-                    callbacks=[tensorboard_callback])
+history = model.fit(
+    dataset,
+    batch_size=batch_size,
+    epochs=epochs,
+    steps_per_epoch=5000,
+    callbacks=[early_stopping_callback, tensorboard_callback]
+)
 
 test_scores = model.evaluate(dataset, verbose=2)
 

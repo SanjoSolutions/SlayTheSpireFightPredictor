@@ -11,6 +11,8 @@ import gzip
 from multiprocessing import Process, Pool
 from math import floor, ceil
 from pathlib import Path
+from tensorflow.io import TFRecordWriter
+from tensorflow.train import Example, Features, Feature, BytesList, Int64List
 
 import pprint
 
@@ -1507,17 +1509,21 @@ def process_runs():
     total_number_of_files = float(len(file_paths))
     number_of_files_processed = 0
     last_reported_percentage_of_files_processed = 0
-    with tf.io.TFRecordWriter(output_path) as file_writer:
-        with Pool() as pool:
+    total_number_of_examples = 0
+    with TFRecordWriter(output_path) as file_writer:
+        with Pool(8) as pool:
             for examples in pool.imap_unordered(process, file_paths, chunksize=1):
                 for example in examples:
                     file_writer.write(example)
+                    total_number_of_examples += 1
 
                 number_of_files_processed += 1
                 percentage_of_files_processed = number_of_files_processed / total_number_of_files
                 if percentage_of_files_processed - last_reported_percentage_of_files_processed >= 0.10:
                     print(str(floor(percentage_of_files_processed * 100)) + '% of files processed.')
                     last_reported_percentage_of_files_processed = percentage_of_files_processed
+
+    print('Number of examples: ' + str(total_number_of_examples))
 
 
 def gather_file_paths(folder_path):
@@ -1530,12 +1536,12 @@ def gather_file_paths(folder_path):
 
 
 def process(file_path):
+    examples = []
     if file_path.endswith(".run.json") or file_path.endswith(".run") or file_path.endswith(".json.gz"):
-        examples = []
         try:
             entries = read_file(file_path)
             for entry in entries:
-                if not is_bad_file(entry):
+                if not is_bad_entry(entry):
                     try:
                         run_examples = process_run(entry)
                         examples.extend(run_examples)
@@ -1544,7 +1550,7 @@ def process(file_path):
         except Exception as e:
             pass
 
-        return convert_to_tfrecord_examples(examples)
+    return convert_to_tfrecord_examples(examples)
 
 
 def convert_to_tfrecord_examples(examples):
@@ -1553,17 +1559,25 @@ def convert_to_tfrecord_examples(examples):
 
 def convert_to_tfrecord_example(example):
     return Example(features=Features(feature={
-        'cards': Feature(bytes_list=BytesList(value=to_byte_strings(entry['cards']))),
-        'relics': Feature(bytes_list=BytesList(value=to_byte_strings(entry['relics']))),
-        'max_hp': Feature(int64_list=Int64List(value=[entry['max_hp']])),
-        'entering_hp': Feature(int64_list=Int64List(value=[entry['entering_hp']])),
-        'character': Feature(bytes_list=BytesList(value=[to_byte_string(entry['character'])])),
-        'ascension': Feature(int64_list=Int64List(value=[entry['ascension']])),
-        'enemies': Feature(bytes_list=BytesList(value=[to_byte_string(entry['enemies'])])),
-        'potion_used': Feature(int64_list=Int64List(value=[entry['potion_used']])),
-        'floor': Feature(int64_list=Int64List(value=[entry['floor']])),
-        'damage_taken': Feature(int64_list=Int64List(value=[entry['damage_taken']])),
+        'cards': Feature(bytes_list=BytesList(value=to_byte_strings(example['cards']))),
+        'relics': Feature(bytes_list=BytesList(value=to_byte_strings(example['relics']))),
+        'max_hp': Feature(int64_list=Int64List(value=[example['max_hp']])),
+        'entering_hp': Feature(int64_list=Int64List(value=[example['entering_hp']])),
+        'character': Feature(bytes_list=BytesList(value=[to_byte_string(example['character'])])),
+        'ascension': Feature(int64_list=Int64List(value=[example['ascension']])),
+        'enemies': Feature(bytes_list=BytesList(value=[to_byte_string(example['enemies'])])),
+        'potion_used': Feature(int64_list=Int64List(value=[example['potion_used']])),
+        'floor': Feature(int64_list=Int64List(value=[example['floor']])),
+        'damage_taken': Feature(int64_list=Int64List(value=[example['damage_taken']])),
     })).SerializeToString()
+
+
+def to_byte_strings(strings):
+    return list(map(to_byte_string, strings))
+
+
+def to_byte_string(string):
+    return string.encode('utf-8')
 
 
 def read_file(file_path):
@@ -1949,10 +1963,10 @@ def valid_build_number(string, character):
     return False
 
 
-def is_bad_file(data):
-    # key = 'ascension_level'
-    # if key not in data or data[key] < 20:
-    #     return True
+def is_bad_entry(data):
+    key = 'ascension_level'
+    if key not in data or data[key] < 20:
+        return True
 
     key = 'floor_reached'
     if key not in data or data[key] < 51 or data[key] > 56:
