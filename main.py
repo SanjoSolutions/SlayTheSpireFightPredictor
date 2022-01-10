@@ -9,8 +9,8 @@ import datetime
 from itertools import groupby
 import gzip
 from multiprocessing import Process, Pool
-import shutil
 from math import floor, ceil
+from pathlib import Path
 
 import pprint
 
@@ -1498,22 +1498,26 @@ BASE_GAME_ENEMIES = {
 
 
 input_path = r'E:\google_drive\2_0'
-base_output_path = os.path.abspath(r'out\b')
+output_path = os.path.abspath(r'out\c.tfrecord')
 
 
 def process_runs():
-    shutil.rmtree(base_output_path, ignore_errors=True)
+    Path(output_path).unlink(missing_ok=True)
     file_paths = gather_file_paths(input_path)
     total_number_of_files = float(len(file_paths))
     number_of_files_processed = 0
     last_reported_percentage_of_files_processed = 0
-    with Pool() as pool:
-        for result in pool.imap_unordered(process, file_paths, chunksize=1):
-            number_of_files_processed += 1
-            percentage_of_files_processed = number_of_files_processed / total_number_of_files
-            if percentage_of_files_processed - last_reported_percentage_of_files_processed >= 0.10:
-                print(str(floor(percentage_of_files_processed * 100)) + '% of files processed.')
-                last_reported_percentage_of_files_processed = percentage_of_files_processed
+    with tf.io.TFRecordWriter(output_path) as file_writer:
+        with Pool() as pool:
+            for examples in pool.imap_unordered(process, file_paths, chunksize=1):
+                for example in examples:
+                    file_writer.write(example)
+
+                number_of_files_processed += 1
+                percentage_of_files_processed = number_of_files_processed / total_number_of_files
+                if percentage_of_files_processed - last_reported_percentage_of_files_processed >= 0.10:
+                    print(str(floor(percentage_of_files_processed * 100)) + '% of files processed.')
+                    last_reported_percentage_of_files_processed = percentage_of_files_processed
 
 
 def gather_file_paths(folder_path):
@@ -1540,10 +1544,26 @@ def process(file_path):
         except Exception as e:
             pass
 
-        if len(examples) >= 1:
-            path = file_path.split(os.extsep, 1)[0]
-            output_path = os.path.join(base_output_path, os.path.relpath(path, start=input_path)) + os.extsep + 'json'
-            write_file(examples, output_path)
+        return convert_to_tfrecord_examples(examples)
+
+
+def convert_to_tfrecord_examples(examples):
+    return list(map(convert_to_tfrecord_example, examples))
+
+
+def convert_to_tfrecord_example(example):
+    return Example(features=Features(feature={
+        'cards': Feature(bytes_list=BytesList(value=to_byte_strings(entry['cards']))),
+        'relics': Feature(bytes_list=BytesList(value=to_byte_strings(entry['relics']))),
+        'max_hp': Feature(int64_list=Int64List(value=[entry['max_hp']])),
+        'entering_hp': Feature(int64_list=Int64List(value=[entry['entering_hp']])),
+        'character': Feature(bytes_list=BytesList(value=[to_byte_string(entry['character'])])),
+        'ascension': Feature(int64_list=Int64List(value=[entry['ascension']])),
+        'enemies': Feature(bytes_list=BytesList(value=[to_byte_string(entry['enemies'])])),
+        'potion_used': Feature(int64_list=Int64List(value=[entry['potion_used']])),
+        'floor': Feature(int64_list=Int64List(value=[entry['floor']])),
+        'damage_taken': Feature(int64_list=Int64List(value=[entry['damage_taken']])),
+    })).SerializeToString()
 
 
 def read_file(file_path):
