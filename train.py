@@ -2,9 +2,11 @@ import numpy as np
 import tensorflow as tf
 import pdb
 
-input_path = r'C:\slay_the_spire\SlayTheSpireFightPredictor\out\g.tfrecord'
+train_data_input_path = r'E:\h_train.tfrecord'
+test_data_input_path = r'E:\h_test.tfrecord'
 
-dataset = tf.data.TFRecordDataset(filenames=[input_path])
+train_dataset = tf.data.TFRecordDataset(filenames=[train_data_input_path])
+test_dataset = tf.data.TFRecordDataset(filenames=[test_data_input_path])
 
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import LabelEncoder
@@ -1285,13 +1287,18 @@ from sklearn.preprocessing import MaxAbsScaler
 from sklearn.model_selection import train_test_split
 import datetime, os
 
-batch_size = 128
+batch_size = 256
 
-dataset = dataset.map(preprocess, num_parallel_calls=tf.data.AUTOTUNE)
-# dataset = dataset.repeat()
-dataset = dataset.shuffle(5000)
-dataset = dataset.batch(batch_size)
-dataset = dataset.prefetch(tf.data.AUTOTUNE)
+train_dataset = train_dataset.map(preprocess, num_parallel_calls=tf.data.AUTOTUNE)
+# train_dataset = train_dataset.repeat()
+train_dataset = train_dataset.shuffle(5000)
+train_dataset = train_dataset.batch(batch_size)
+train_dataset = train_dataset.prefetch(tf.data.AUTOTUNE)
+
+test_dataset = test_dataset.map(preprocess, num_parallel_calls=tf.data.AUTOTUNE)
+# test_dataset = test_dataset.repeat()
+test_dataset = test_dataset.batch(batch_size)
+test_dataset = test_dataset.prefetch(tf.data.AUTOTUNE)
 
 model = tf.keras.models.Sequential([
     tf.keras.layers.Dense(
@@ -1307,30 +1314,33 @@ model = tf.keras.models.Sequential([
 
 model.summary()
 model.compile(
-    optimizer=keras.optimizers.RMSprop(learning_rate=.001),
+    optimizer=keras.optimizers.Adam(learning_rate=.001),
     loss='mean_absolute_error'
 )
 
 early_stopping_callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
 
 # Tensorboard
-# logdir = os.path.join("logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
-# tensorboard_callback = tf.keras.callbacks.TensorBoard(logdir, histogram_freq=1)
+logdir = os.path.join("logs", "fit", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+tensorboard_callback = tf.keras.callbacks.TensorBoard(logdir, histogram_freq=1)
 
 history = model.fit(
-    dataset,
+    train_dataset,
+    validation_data=test_dataset,
+    validation_steps=100,
     batch_size=batch_size,
-    epochs=5,
+    epochs=100,
+    steps_per_epoch=100,
     callbacks=[
         early_stopping_callback,
-        # tensorboard_callback
+        tensorboard_callback
     ],
     max_queue_size=os.cpu_count(),
     workers=os.cpu_count(),
     use_multiprocessing=True
 )
 
-test_score = model.evaluate(dataset, verbose=2)
+test_score = model.evaluate(test_dataset, verbose=2)
 
 print("Test loss:", test_score)
 

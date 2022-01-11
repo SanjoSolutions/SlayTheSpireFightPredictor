@@ -13,6 +13,7 @@ from math import floor, ceil
 from pathlib import Path
 from tensorflow.io import TFRecordWriter
 from tensorflow.train import Example, Features, Feature, BytesList, Int64List
+from random import random
 
 import pprint
 
@@ -1500,28 +1501,35 @@ BASE_GAME_ENEMIES = {
 
 
 input_path = r'E:\google_drive\2_0'
-output_path = os.path.abspath(r'out\g.tfrecord')
+train_output_path = r'E:\h_train.tfrecord'
+test_output_path = r'E:\h_test.tfrecord'
+TEST_DATA_PERCENTAGE = 0.2
 
 
 def process_runs():
-    Path(output_path).unlink(missing_ok=True)
+    Path(train_output_path).unlink(missing_ok=True)
+    Path(test_output_path).unlink(missing_ok=True)
     file_paths = gather_file_paths(input_path)
     total_number_of_files = float(len(file_paths))
     number_of_files_processed = 0
     last_reported_percentage_of_files_processed = 0
     total_number_of_examples = 0
-    with TFRecordWriter(output_path) as file_writer:
-        with Pool(8) as pool:
-            for examples in pool.imap_unordered(process, file_paths, chunksize=1):
-                for example in examples:
-                    file_writer.write(example)
-                    total_number_of_examples += 1
+    with TFRecordWriter(train_output_path) as train_file_writer:
+        with TFRecordWriter(test_output_path) as test_file_writer:
+            with Pool(8) as pool:
+                for examples in pool.imap_unordered(process, file_paths, chunksize=1):
+                    for example in examples:
+                        if random() < TEST_DATA_PERCENTAGE:
+                            test_file_writer.write(example)
+                        else:
+                            train_file_writer.write(example)
+                        total_number_of_examples += 1
 
-                number_of_files_processed += 1
-                percentage_of_files_processed = number_of_files_processed / total_number_of_files
-                if percentage_of_files_processed - last_reported_percentage_of_files_processed >= 0.10:
-                    print(str(floor(percentage_of_files_processed * 100)) + '% of files processed.')
-                    last_reported_percentage_of_files_processed = percentage_of_files_processed
+                    number_of_files_processed += 1
+                    percentage_of_files_processed = number_of_files_processed / total_number_of_files
+                    if percentage_of_files_processed - last_reported_percentage_of_files_processed >= 0.10:
+                        print(str(floor(percentage_of_files_processed * 100)) + '% of files processed.')
+                        last_reported_percentage_of_files_processed = percentage_of_files_processed
 
     print('Number of examples: ' + str(total_number_of_examples))
 
@@ -1964,10 +1972,6 @@ def valid_build_number(string):
 
 
 def is_bad_entry(data):
-    key = 'ascension_level'
-    if key not in data or data[key] < 20:
-        return True
-
     key = 'floor_reached'
     if key not in data or data[key] < 51 or data[key] > 56:
         return True
