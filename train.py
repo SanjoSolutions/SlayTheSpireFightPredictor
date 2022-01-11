@@ -2,8 +2,8 @@ import numpy as np
 import tensorflow as tf
 import pdb
 
-train_data_input_path = r'E:\h_train.tfrecord'
-test_data_input_path = r'E:\h_test.tfrecord'
+train_data_input_path = r'E:\i_train.tfrecord'
+test_data_input_path = r'E:\i_test.tfrecord'
 
 train_dataset = tf.data.TFRecordDataset(filenames=[train_data_input_path])
 test_dataset = tf.data.TFRecordDataset(filenames=[test_data_input_path])
@@ -12,6 +12,7 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import LabelEncoder
 import re
 
+# TODO: Inputs for Searing Blow+n (with n > 1)
 # Categories for one hot encoder. Categories are in alphabetical order and is the order used by OneHotEncoder
 ALL_CARDS = [
     "Immolate",
@@ -383,393 +384,7 @@ ALL_CARDS = [
     "Flying Knee",
     "Predator",
     "Pray",
-    "Madness",
-
-    # upgrades
-    "Immolate+1",
-    "Grand Finale+1",
-    "Regret+1",
-    "Crippling Poison+1",
-    "Storm+1",
-    "DeusExMachina+1",
-    "A Thousand Cuts+1",
-    "Spot Weakness+1",
-    "Genetic Algorithm+1",
-    "Go for the Eyes+1",
-    "Zap+1",
-    "Steam Power+1",
-    "Wound+1",
-    "Core Surge+1",
-    "Fission+1",
-    "Writhe+1",
-    "Beta+1",
-    "Hello World+1",
-    "Creative AI+1",
-    "Dark Shackles+1",
-    "Glass Knife+1",
-    "Consecrate+1",
-    "Cloak And Dagger+1",
-    "BowlingBash+1",
-    "Underhanded Strike+1",
-    "Anger+1",
-    "Storm of Steel+1",
-    "WheelKick+1",
-    "Cleave+1",
-    "Ball Lightning+1",
-    "Warcry+1",
-    "Sunder+1",
-    "Glacier+1",
-    "Inflame+1",
-    "Sadistic Nature+1",
-    "J.A.X.+1",
-    "Offering+1",
-    "Vengeance+1",
-    "FlyingSleeves+1",
-    "Exhume+1",
-    "Streamline+1",
-    "Wireheading+1",
-    "Consume+1",
-    "Power Through+1",
-    "Dual Wield+1",
-    "Deadly Poison+1",
-    "Leg Sweep+1",
-    "PanicButton+1",
-    "Flex+1",
-    "Redo+1",
-    "AscendersBane+1",
-    "Dagger Spray+1",
-    "Bullet Time+1",
-    "Fusion+1",
-    "Catalyst+1",
-    "Sanctity+1",
-    "Halt+1",
-    "Reaper+1",
-    "Shiv+1",
-    "Bane+1",
-    "Tactician+1",
-    "JustLucky+1",
-    "Infernal Blade+1",
-    "After Image+1",
-    "Unload+1",
-    "FlurryOfBlows+1",
-    "Blade Dance+1",
-    "Deflect+1",
-    "Compile Driver+1",
-    "TalkToTheHand+1",
-    "BattleHymn+1",
-    "Protect+1",
-    "Trip+1",
-    "Indignation+1",
-    "Dagger Throw+1",
-    "Amplify+1",
-    "ThirdEye+1",
-    "Brutality+1",
-    "Night Terror+1",
-    "WindmillStrike+1",
-    "Iron Wave+1",
-    "Reboot+1",
-    "Reckless Charge+1",
-    "All For One+1",
-    "ForeignInfluence+1",
-    "Decay+1",
-    "FameAndFortune+1",
-    "Tools of the Trade+1",
-    "Aggregate+1",
-    "Expertise+1",
-    "Dramatic Entrance+1",
-    "Hemokinesis+1",
-    "Blizzard+1",
-    "Chaos+1",
-    "LiveForever+1",
-    "Intimidate+1",
-    "Echo Form+1",
-    "Necronomicurse+1",
-    "Juggernaut+1",
-    "Choke+1",
-    "Caltrops+1",
-    "Impatience+1",
-    "DevaForm+1",
-    "Poisoned Stab+1",
-    "The Bomb+1",
-    "Blur+1",
-    "LikeWater+1",
-    "Body Slam+1",
-    "True Grit+1",
-    "Insight+1",
-    "Setup+1",
-    "Barrage+1",
-    "Crescendo+1",
-    "SpiritShield+1",
-    "Blood for Blood+1",
-    "Impervious+1",
-    "ClearTheMind+1",
-    "EmptyBody+1",
-    "Shrug It Off+1",
-    "Meteor Strike+1",
-    "Establishment+1",
-    "Fasting2+1",
-    "Clash+1",
-    "Stack+1",
-    "Miracle+1",
-    "CarveReality+1",
-    "Wallop+1",
-    "Thunderclap+1",
-    "Rebound+1",
-    "Flame Barrier+1",
-    "Seek+1",
-    "Endless Agony+1",
-    "WreathOfFlame+1",
-    "Collect+1",
-    "SashWhip+1",
-    "Wraith Form v2+1",
-    "Melter+1",
-    "Berserk+1",
-    "Pummel+1",
-    "Burning Pact+1",
-    "Riddle With Holes+1",
-    "Metallicize+1",
-    "Self Repair+1",
-    "Pommel Strike+1",
-    "Pain+1",
-    "Rainbow+1",
-    "InnerPeace+1",
-    "Burst+1",
-    "Acrobatics+1",
-    "Adaptation+1",
-    "Loop+1",
-    "Blind+1",
-    "Doppelganger+1",
-    "Skewer+1",
-    "Omniscience+1",
-    "Envenom+1",
-    "Chill+1",
-    "Adrenaline+1",
-    "Quick Slash+1",
-    "Twin Strike+1",
-    "BootSequence+1",
-    "Parasite+1",
-    "Bash+1",
-    "RitualDagger+1",
-    "Gash+1",
-    "Wish+1",
-    "Clothesline+1",
-    "DeceiveReality+1",
-    "MentalFortress+1",
-    "Shockwave+1",
-    "BecomeAlmighty+1",
-    "Rampage+1",
-    "Coolheaded+1",
-    "Static Discharge+1",
-    "Alpha+1",
-    "Heatsinks+1",
-    "Vault+1",
-    "Bandage Up+1",
-    "Scrawl+1",
-    "Sever Soul+1",
-    "Eruption+1",
-    "Whirlwind+1",
-    "Bite+1",
-    "LessonLearned+1",
-    "Secret Technique+1",
-    "Calculated Gamble+1",
-    "Tempest+1",
-    "Combust+1",
-    "Deep Breath+1",
-    "Doubt+1",
-    "Escape Plan+1",
-    "CutThroughFate+1",
-    "ReachHeaven+1",
-    "Finisher+1",
-    "Dark Embrace+1",
-    "Die Die Die+1",
-    "Well Laid Plans+1",
-    "Ragnarok+1",
-    "Buffer+1",
-    "Electrodynamics+1",
-    "FearNoEvil+1",
-    "Seeing Red+1",
-    "SandsOfTime+1",
-    "Smite+1",
-    "Violence+1",
-    "Disarm+1",
-    "Turbo+1",
-    "Panache+1",
-    "Undo+1",
-    "Fiend Fire+1",
-    "Terror+1",
-    "Force Field+1",
-    "Dazed+1",
-    "Barricade+1",
-    "Armaments+1",
-    "Havoc+1",
-    "Secret Weapon+1",
-    "Apotheosis+1",
-    "Sweeping Beam+1",
-    "Feel No Pain+1",
-    "FTL+1",
-    "Rip and Tear+1",
-    "Darkness+1",
-    "Corruption+1",
-    "Heel Hook+1",
-    "Blasphemy+1",
-    "Injury+1",
-    "Double Energy+1",
-    "Rage+1",
-    "Headbutt+1",
-    "Machine Learning+1",
-    "Reinforced Body+1",
-    "Defend_P+1",
-    "Limit Break+1",
-    "Entrench+1",
-    "Noxious Fumes+1",
-    "Infinite Blades+1",
-    "Phantasmal Killer+1",
-    "WaveOfTheHand+1",
-    "Malaise+1",
-    "Conserve Battery+1",
-    "Defend_R+1",
-    "Mayhem+1",
-    "Reflex+1",
-    "Study+1",
-    "Expunger+1",
-    "Sentinel+1",
-    "Survivor+1",
-    "Wild Strike+1",
-    "Defend_G+1",
-    "HandOfGreed+1",
-    "Meditate+1",
-    "Eviscerate+1",
-    "Flash of Steel+1",
-    "Defend_B+1",
-    "Battle Trance+1",
-    "Forethought+1",
-    "Dualcast+1",
-    "Auto Shields+1",
-    "Perseverance+1",
-    "Swivel+1",
-    "Heavy Blade+1",
-    "Slimed+1",
-    "Clumsy+1",
-    "Biased Cognition+1",
-    "Searing Blow+1",
-    "Searing Blow+2",
-    "Searing Blow+3",
-    "Searing Blow+4",
-    "Searing Blow+5",
-    "Searing Blow+6",
-    "Searing Blow+7",
-    "Searing Blow+8",
-    "Searing Blow+9",
-    "Searing Blow+10",
-    "Searing Blow+11",
-    "Searing Blow+12",
-    "Searing Blow+13",
-    "Searing Blow+14",
-    "Searing Blow+15",
-    "Devotion+1",
-    "Reprogram+1",
-    "Hologram+1",
-    "Corpse Explosion+1",
-    "Second Wind+1",
-    "Enlightenment+1",
-    "Purity+1",
-    "Panacea+1",
-    "Lockon+1",
-    "Dash+1",
-    "Worship+1",
-    "Conclude+1",
-    "ThroughViolence+1",
-    "Transmutation+1",
-    "Ghostly+1",
-    "Backstab+1",
-    "Chrysalis+1",
-    "FollowUp+1",
-    "Void+1",
-    "Scrape+1",
-    "Feed+1",
-    "Vigilance+1",
-    "Rupture+1",
-    "Venomology+1",
-    "Discovery+1",
-    "Beam Cell+1",
-    "Leap+1",
-    "CurseOfTheBell+1",
-    "Bouncing Flask+1",
-    "PathToVictory+1",
-    "Bludgeon+1",
-    "Finesse+1",
-    "Slice+1",
-    "Recycle+1",
-    "Backflip+1",
-    "Outmaneuver+1",
-    "Bloodletting+1",
-    "Brilliance+1",
-    "Magnetism+1",
-    "Concentrate+1",
-    "Skim+1",
-    "White Noise+1",
-    "Capacitor+1",
-    "Cold Snap+1",
-    "CrushJoints+1",
-    "Master of Strategy+1",
-    "Flechettes+1",
-    "Tantrum+1",
-    "Perfected Strike+1",
-    "Strike_B+1",
-    "Thunder Strike+1",
-    "Carnage+1",
-    "Masterful Stab+1",
-    "Nirvana+1",
-    "Evaluate+1",
-    "Prepared+1",
-    "Good Instincts+1",
-    "Dropkick+1",
-    "Swift Strike+1",
-    "Normality+1",
-    "Strike_G+1",
-    "MasterReality+1",
-    "Omega+1",
-    "Hyperbeam+1",
-    "Accuracy+1",
-    "Sword Boomerang+1",
-    "EmptyMind+1",
-    "Pride+1",
-    "Defragment+1",
-    "Jack Of All Trades+1",
-    "Demon Form+1",
-    "Fire Breathing+1",
-    "Ghostly Armor+1",
-    "Weave+1",
-    "Safety+1",
-    "Metamorphosis+1",
-    "Prostrate+1",
-    "SignatureMove+1",
-    "Uppercut+1",
-    "PiercingWail+1",
-    "Mind Blast+1",
-    "Neutralize+1",
-    "Multi-Cast+1",
-    "Shame+1",
-    "Doom and Gloom+1",
-    "Evolve+1",
-    "Double Tap+1",
-    "Sucker Punch+1",
-    "Burn+1",
-    "ConjureBlade+1",
-    "Strike_R+1",
-    "Judgement+1",
-    "Footwork+1",
-    "Strike_P+1",
-    "Steam+1",
-    "Distraction+1",
-    "Dodge and Roll+1",
-    "Thinking Ahead+1",
-    "EmptyFist+1",
-    "All Out Attack+1",
-    "Flying Knee+1",
-    "Predator+1",
-    "Pray+1",
-    "Madness+1"
+    "Madness"
 ]
 
 character_letters = ('B', 'G', 'R', 'P')
@@ -779,11 +394,6 @@ def replace_card_with_generalized_card(name):
     for character_letter in character_letters:
         ALL_CARDS.remove(name + '_' + character_letter)
     ALL_CARDS.append(name)
-
-    for character_letter in character_letters:
-        ALL_CARDS.remove(name + '_' + character_letter + '+1')
-    ALL_CARDS.append(name + '+1')
-
 
 replace_card_with_generalized_card('Strike')
 replace_card_with_generalized_card('Defend')
@@ -1133,19 +743,39 @@ def generalize_strikes_and_defends(cards):
 
 
 MAX_AMOUNT_PER_CARD_TYPE = 10
+MAX_UPGRADES_PER_CARD = 1
 
 
 def encode_cards(cards):
     cards = np.array(cards)
     generalize_strikes_and_defends(cards)
-    encoding = np.zeros((len(ALL_CARDS) * MAX_AMOUNT_PER_CARD_TYPE,))
+    encoding = np.zeros(((len(ALL_CARDS) + MAX_UPGRADES_PER_CARD) * MAX_AMOUNT_PER_CARD_TYPE,))
     for card in cards:
-        index = card_to_index[card]
-        for offset in range(MAX_AMOUNT_PER_CARD_TYPE):
+        base_card_name, number_of_upgrades = parse_card(card)
+        index = card_to_index[base_card_name]
+        for offset in range(0, (MAX_AMOUNT_PER_CARD_TYPE + MAX_UPGRADES_PER_CARD), 1 + MAX_UPGRADES_PER_CARD):
             if encoding[index + offset] == 0:
                 encoding[index + offset] = 1
+                if number_of_upgrades >= 1:
+                    encoding[index + offset + 1] = 1
                 break
     return encoding
+
+
+CARD_NAME_REGULAR_EXPRESSION = re.compile("^(.+?)(?:\+(\d+))?$")
+
+
+def parse_card(card):
+    match = CARD_NAME_REGULAR_EXPRESSION.match(card)
+    if match is None:
+        print('match is None', card)
+    base_card_name = match.group(1)
+    number_of_upgrades = match.group(2)
+    if number_of_upgrades:
+        number_of_upgrades = int(number_of_upgrades)
+    else:
+        number_of_upgrades = 0
+    return base_card_name, number_of_upgrades
 
 
 def encode_relics(relics):
@@ -1290,20 +920,20 @@ import datetime, os
 batch_size = 256
 
 train_dataset = train_dataset.map(preprocess, num_parallel_calls=tf.data.AUTOTUNE)
-# train_dataset = train_dataset.repeat()
+train_dataset = train_dataset.repeat()
 train_dataset = train_dataset.shuffle(5000)
 train_dataset = train_dataset.batch(batch_size)
 train_dataset = train_dataset.prefetch(tf.data.AUTOTUNE)
 
 test_dataset = test_dataset.map(preprocess, num_parallel_calls=tf.data.AUTOTUNE)
-# test_dataset = test_dataset.repeat()
+test_dataset = test_dataset.repeat()
 test_dataset = test_dataset.batch(batch_size)
 test_dataset = test_dataset.prefetch(tf.data.AUTOTUNE)
 
 model = tf.keras.models.Sequential([
     tf.keras.layers.Dense(
         400,
-        input_shape=(len(ALL_CARDS) * MAX_AMOUNT_PER_CARD_TYPE + len(ALL_RELICS) + len(ALL_ENCOUNTERS) + 4,),
+        input_shape=((len(ALL_CARDS) + MAX_UPGRADES_PER_CARD) * MAX_AMOUNT_PER_CARD_TYPE + len(ALL_RELICS) + len(ALL_ENCOUNTERS) + 4,),
         activation='relu'
     ),
     tf.keras.layers.Dropout(.2),

@@ -1501,8 +1501,8 @@ BASE_GAME_ENEMIES = {
 
 
 input_path = r'E:\google_drive\2_0'
-train_output_path = r'E:\h_train.tfrecord'
-test_output_path = r'E:\h_test.tfrecord'
+train_output_path = r'E:\i_train.tfrecord'
+test_output_path = r'E:\i_test.tfrecord'
 TEST_DATA_PERCENTAGE = 0.2
 
 
@@ -1543,6 +1543,13 @@ def gather_file_paths(folder_path):
     return file_paths
 
 
+act_3_bosses = {
+    'Awakened One',
+    'Donu and Deca',
+    'Time Eater',
+}
+
+
 def process(file_path):
     examples = []
     if file_path.endswith(".run.json") or file_path.endswith(".run") or file_path.endswith(".json.gz"):
@@ -1552,6 +1559,7 @@ def process(file_path):
                 if not is_bad_entry(entry):
                     try:
                         run_examples = process_run(entry)
+                        run_examples = filter(lambda example: example['enemies'] in act_3_bosses, run_examples)
                         examples.extend(run_examples)
                     except Exception as e:
                         pass
