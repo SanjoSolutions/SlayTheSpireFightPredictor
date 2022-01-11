@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 import pdb
 
-input_path = r'C:\slay_the_spire\SlayTheSpireFightPredictor\out\d.tfrecord'
+input_path = r'C:\slay_the_spire\SlayTheSpireFightPredictor\out\g.tfrecord'
 
 dataset = tf.data.TFRecordDataset(filenames=[input_path])
 
@@ -1007,11 +1007,92 @@ ALL_RELICS = [
     "Yang"
 ]
 ALL_ENCOUNTERS = [
+    'Blue Slaver',
+    'Cultist',
+    'Jaw Worm',
+    '2 Louse',
+    'Small Slimes',
+
+    'Gremlin Gang',
+    'Large Slime',
+    'Looter',
+    'Lots of Slimes',
+    'Exordium Thugs',
+    'Exordium Wildlife',
+    'Red Slaver',
+    '3 Louse',
+    '2 Fungi Beasts',
+
+    'Gremlin Nob',
+    'Lagavulin',
+    '3 Sentries',
+
+    'Lagavulin Event',
+    'The Mushroom Lair',
+
+    'The Guardian',
+    'Hexaghost',
+    'Slime Boss',
+
+    'Chosen',
+    'Shell Parasite',
+    'Spheric Guardian',
+    '3 Byrds',
+    '2 Thieves',
+
+    'Chosen and Byrds',
+    'Sentry and Sphere',
+    'Snake Plant',
+    'Snecko',
+    'Centurion and Healer',
+    'Cultist and Chosen',
+    '3 Cultists',
+    'Shelled Parasite and Fungi',
+
+    'Gremlin Leader',
+    'Slavers',
+    'Book of Stabbing',
+
+    'Masked Bandits',
+    'Colosseum Nobs',
+    'Colosseum Slavers',
+
+    'Automaton',
+    'Champ',
+    'Collector',
+
+    'Orb Walker',
+    '3 Darklings',
+    '3 Shapes',
+
+    'Transient',
+    '4 Shapes',
+    'Maw',
+    'Jaw Worm Horde',
+    'Sphere and 2 Shapes',
+    'Spire Growth',
+    'Writhing Mass',
+
+    'Giant Head',
+    'Nemesis',
+    'Reptomancer',
+
+    'Mysterious Sphere',
+    'Mind Bloom Boss Battle',
+    '2 Orb Walkers',
+
     'Awakened One',
     'Donu and Deca',
-    'Time Eater'
+    'Time Eater',
+
+    'Shield and Spear',
+
+    'The Heart'
 ]
 ALL_CHARACTERS = [
+    'DEFECT',
+    'IRONCLAD',
+    'THE_SILENT',
     'WATCHER'
 ]
 
@@ -1061,6 +1142,7 @@ def encode_cards(cards):
         for offset in range(MAX_AMOUNT_PER_CARD_TYPE):
             if encoding[index + offset] == 0:
                 encoding[index + offset] = 1
+                break
     return encoding
 
 
@@ -1147,8 +1229,7 @@ USE_EMBEDDING = False
 
 
 def preprocess(sample):
-    [x, y] = tf.py_function(preprocess2, [sample], [tf.float32, tf.float32])
-    return x, y
+    return tf.py_function(preprocess2, [sample], [tf.float32, tf.float32])
 
 
 def preprocess2(sample):
@@ -1171,6 +1252,7 @@ def preprocess2(sample):
     else:
         x = encode_sample_with_loop(parsed_example)
     y = parsed_example['damage_taken']
+
     return x, y
 
 
@@ -1203,14 +1285,13 @@ from sklearn.preprocessing import MaxAbsScaler
 from sklearn.model_selection import train_test_split
 import datetime, os
 
-epochs = 5
-batch_size = 32
+batch_size = 128
 
-dataset = dataset.prefetch(tf.data.AUTOTUNE)
 dataset = dataset.map(preprocess, num_parallel_calls=tf.data.AUTOTUNE)
-dataset = dataset.repeat(epochs)
+# dataset = dataset.repeat()
 dataset = dataset.shuffle(5000)
 dataset = dataset.batch(batch_size)
+dataset = dataset.prefetch(tf.data.AUTOTUNE)
 
 model = tf.keras.models.Sequential([
     tf.keras.layers.Dense(
@@ -1239,16 +1320,18 @@ early_stopping_callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patie
 history = model.fit(
     dataset,
     batch_size=batch_size,
-    epochs=1,
+    epochs=5,
     callbacks=[
         early_stopping_callback,
         # tensorboard_callback
-    ]
+    ],
+    max_queue_size=os.cpu_count(),
+    workers=os.cpu_count(),
+    use_multiprocessing=True
 )
 
-test_scores = model.evaluate(dataset, verbose=2)
+test_score = model.evaluate(dataset, verbose=2)
 
-print("Test loss:", test_scores[0])
-print("Test accuracy:", test_scores[1])
+print("Test loss:", test_score)
 
 model.save("STSFightPredictor")

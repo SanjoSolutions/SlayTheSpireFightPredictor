@@ -1500,7 +1500,7 @@ BASE_GAME_ENEMIES = {
 
 
 input_path = r'E:\google_drive\2_0'
-output_path = os.path.abspath(r'out\d.tfrecord')
+output_path = os.path.abspath(r'out\g.tfrecord')
 
 
 def process_runs():
@@ -1535,13 +1535,6 @@ def gather_file_paths(folder_path):
     return file_paths
 
 
-act_3_bosses = {
-    'Awakened One',
-    'Donu and Deca',
-    'Time Eater',
-}
-
-
 def process(file_path):
     examples = []
     if file_path.endswith(".run.json") or file_path.endswith(".run") or file_path.endswith(".json.gz"):
@@ -1551,7 +1544,6 @@ def process(file_path):
                 if not is_bad_entry(entry):
                     try:
                         run_examples = process_run(entry)
-                        run_examples = filter(lambda example: example['enemies'] in act_3_bosses, run_examples)
                         examples.extend(run_examples)
                     except Exception as e:
                         pass
@@ -1972,9 +1964,9 @@ def valid_build_number(string):
 
 
 def is_bad_entry(data):
-    # key = 'ascension_level'
-    # if key not in data or data[key] < 20:
-    #     return True
+    key = 'ascension_level'
+    if key not in data or data[key] < 20:
+        return True
 
     key = 'floor_reached'
     if key not in data or data[key] < 51 or data[key] > 56:
