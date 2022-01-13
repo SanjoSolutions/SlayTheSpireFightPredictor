@@ -948,7 +948,7 @@ model.compile(
     loss='mean_absolute_error'
 )
 
-early_stopping_callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
+early_stopping_callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=3)
 
 # Tensorboard
 logdir = os.path.join("logs", "fit", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
@@ -969,9 +969,5 @@ history = model.fit(
     workers=os.cpu_count(),
     use_multiprocessing=True
 )
-
-test_score = model.evaluate(test_dataset, verbose=2)
-
-print("Test loss:", test_score)
 
 model.save("STSFightPredictor")
