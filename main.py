@@ -1501,8 +1501,8 @@ BASE_GAME_ENEMIES = {
 
 
 input_path = r'E:\google_drive\2_0'
-train_output_path = r'E:\i_train.tfrecord'
-test_output_path = r'E:\i_test.tfrecord'
+train_output_path = r'E:\j_train.tfrecord'
+test_output_path = r'E:\j_test.tfrecord'
 TEST_DATA_PERCENTAGE = 0.2
 
 
@@ -1980,6 +1980,10 @@ def valid_build_number(string):
 
 
 def is_bad_entry(data):
+    key = 'ascension_level'
+    if key not in data or data[key] < 10:
+        return True
+
     key = 'floor_reached'
     if key not in data or data[key] < 51 or data[key] > 56:
         return True
